@@ -1,0 +1,29 @@
+# Environment
+venv/
+env/
+.venv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyc
+
+# IMPORTANT: Protect your API keys!
+.env
+.env.local
+
+# RAG data (too large, will regenerate)
+chroma_db/
+uploads/
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

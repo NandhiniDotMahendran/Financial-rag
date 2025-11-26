@@ -1,0 +1,16 @@
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+streamlit==1.29.0
+python-multipart==0.0.6
+pydantic==2.5.0
+requests==2.31.0
+
+# RAG with Ollama (100% FREE, LOCAL)
+langchain==0.0.350
+langchain-community==0.0.13
+chromadb==0.4.18
+pypdf==3.17.1
+python-dotenv==1.0.0
+tiktoken==0.5.2
+ollama==0.1.7
