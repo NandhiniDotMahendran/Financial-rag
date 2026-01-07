@@ -2,13 +2,38 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+from contextlib import asynccontextmanager
 import uvicorn
 import os
 import shutil
+from dotenv import load_dotenv
+
+# Load environment variables FIRST
+load_dotenv()
+
 from rag_engine import FinancialRAG
 
-# Initialize FastAPI app
-app = FastAPI(title="Financial RAG API", version="2.0.0")
+# Global RAG instance
+rag = None
+
+# Lifespan context manager for startup/shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    global rag
+    print("🚀 Initializing RAG on startup...")
+    rag = FinancialRAG()
+    print("✅ RAG ready!")
+    yield
+    # Shutdown (cleanup if needed)
+    print("👋 Shutting down...")
+
+# Initialize FastAPI app with lifespan
+app = FastAPI(
+    title="Financial RAG API", 
+    version="2.0.0",
+    lifespan=lifespan
+)
 
 # Add CORS middleware
 app.add_middleware(
@@ -18,17 +43,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Initialize RAG engine (singleton)
-rag = FinancialRAG()
-
-# Try to load existing vectorstore on startup
-@app.on_event("startup")
-async def startup_event():
-    if rag.load_existing_vectorstore():
-        print("✅ Loaded existing vector database")
-    else:
-        print("⚠️ No existing database found - please upload a document")
 
 # Pydantic models
 class QueryRequest(BaseModel):
@@ -44,19 +58,19 @@ class UploadResponse(BaseModel):
     filename: str
     status: str
     chunks: int
-    characters: int
+    characters: int=0
 
 # Health check endpoint
 @app.get("/")
 async def root():
     return {
-        "message": "Financial RAG API v2.0 - Now with REAL AI!",
+        "message": "Financial RAG API v2.0 - Bilingual Edition!",
         "status": "healthy",
         "version": "2.0.0",
-        "vectorstore_loaded": rag.vectorstore is not None
+        "vectorstore_loaded": rag.vectorstore is not None if rag else False
     }
 
-# Upload PDF endpoint - NOW REAL!
+# Upload PDF endpoint
 @app.post("/upload", response_model=UploadResponse)
 async def upload_document(file: UploadFile = File(...)):
     
@@ -80,19 +94,19 @@ async def upload_document(file: UploadFile = File(...)):
         
         return UploadResponse(
             filename=file.filename,
-            status=result["status"],
-            chunks=result["chunks"],
-            characters=result["characters"]
+            status=result.get("status", "success"),
+            chunks=result.get("chunks", 0),
+            characters=result.get("characters", 0)  # Use .get() instead of direct access
         )
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
-# Query endpoint - NOW REAL!
+# Query endpoint
 @app.post("/query", response_model=QueryResponse)
 async def query_document(request: QueryRequest):
     
-    if not rag.vectorstore:
+    if not rag or not rag.vectorstore:
         raise HTTPException(
             status_code=400, 
             detail="No document loaded. Please upload a PDF first."
@@ -132,17 +146,17 @@ async def get_documents():
                 documents.append({
                     "name": filename,
                     "size_mb": round(file_size / (1024*1024), 2),
-                    "status": "processed" if rag.vectorstore else "pending"
+                    "status": "processed" if rag and rag.vectorstore else "pending"
                 })
             except:
                 pass
     
     return {
         "documents": documents,
-        "vectorstore_active": rag.vectorstore is not None
+        "vectorstore_active": rag.vectorstore is not None if rag else False
     }
 
-# Clear vectorstore endpoint (for testing)
+# Clear vectorstore endpoint
 @app.delete("/clear")
 async def clear_vectorstore():
     """Clear the vector database and uploads"""
@@ -156,8 +170,8 @@ async def clear_vectorstore():
             shutil.rmtree("./uploads")
         
         # Reset RAG
-        rag.vectorstore = None
-        rag.qa_chain = None
+        if rag:
+            rag.vectorstore = None
         
         return {"message": "Vector database and uploads cleared"}
     
@@ -166,4 +180,4 @@ async def clear_vectorstore():
 
 # Run the application
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)

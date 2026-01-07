@@ -1,16 +1,43 @@
-# Core Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-streamlit==1.29.0
-python-multipart==0.0.6
-pydantic==2.5.0
-requests==2.31.0
+# ============================================================================
+# FREE Financial RAG - No API costs for table extraction
+# ============================================================================
 
-# RAG with Ollama (100% FREE, LOCAL)
-langchain==0.0.350
-langchain-community==0.0.13
-chromadb==0.4.18
-pypdf==3.17.1
+# Core FastAPI Backend
+fastapi==0.109.0
+python-multipart==0.0.6
 python-dotenv==1.0.0
-tiktoken==0.5.2
-ollama==0.1.7
+
+# FREE Table Extraction (★★★ Main change)
+camelot-py[lattice]==0.11.0      # FREE table extraction (best for financial docs)
+PyMuPDF==1.23.26            # FREE PDF text extraction
+pdfplumber==0.11.0          # Fallback option
+
+# LangChain & Embeddings
+langchain>=0.1.15,<0.2.0
+langchain-huggingface==0.0.1
+langchain-text-splitters==0.0.1
+
+# FREE Embeddings (local, no API)
+sentence-transformers>=2.6.0,<3.0.0
+huggingface-hub>=0.23.0
+
+# Vector Database (FREE, local)
+chromadb==0.4.22
+
+# LLM (Groq - FREE tier available)
+groq==0.4.2
+
+# Utilitiesl
+numpy==1.26.3
+pandas==2.2.0
+opencv-python==4.9.0.80     # Required for Camelot
+Pillow==10.2.0
+
+# Frontend
+streamlit==1.31.0
+
+# Optional but recommended
+requests==2.31.0
+pydantic==2.5.3
+
+httpx<0.27
